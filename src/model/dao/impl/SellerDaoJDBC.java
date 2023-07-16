@@ -41,7 +41,7 @@ public class SellerDaoJDBC implements SellerDao{
 		
 	}
 
-	@Override
+	@Override // Search Seller for ID
 	public Seller finById(Integer id) {
 		PreparedStatement st = null;
 		ResultSet rs = null;
@@ -89,13 +89,50 @@ public class SellerDaoJDBC implements SellerDao{
 		return dep;
 	}
 
-	@Override
+	@Override //Search all Sellers
 	public List<Seller> findAll() {
-		// TODO Auto-generated method stub
-		return null;
+		PreparedStatement st = null;
+		ResultSet rs = null;
+		try {
+			st = conn.prepareStatement(
+					"SELECT seller.*,department.Name as DepName\r\n" 
+					+"FROM seller INNER JOIN department\r\n"
+					+"ON seller.DepartmentId = department.Id\r\n" 
+				
+					+"ORDER BY Name");
+			
+			rs = st.executeQuery();
+			
+			List<Seller> list = new ArrayList<>();
+			Map<Integer, Department> map = new HashMap<>();/*Lista todosss os departaramentos e busca um departamento que 
+															tenha a linha que eu digitar no while
+			 												*/
+			
+			while (rs.next()) {
+				
+				Department dep = map.get(rs.getInt("DepartmentId"));
+				
+				if (dep == null) {
+					dep = instantiateDepartment(rs);
+				    map.put(rs.getInt("DepartmentId"),dep);
+				}
+							
+				Seller obj = instantiateSeller(rs,dep);
+				list.add(obj);
+			}
+			return list;
+		}
+		catch(SQLException e) {
+			throw new DbException(e.getMessage());
+		}
+		finally {
+			DB.closeStatement(st);
+			DB.closeResultSet(rs);
+		}
+		
 	}
 	
-	@Override
+	@Override //Search for Department ID
 	public List<Seller> findByDepartment(Department department) {
 		PreparedStatement st = null;
 		ResultSet rs = null;
